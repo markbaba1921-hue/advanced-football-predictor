@@ -1,77 +1,35 @@
 # utils/predictor.py
-import numpy as np
-from scipy.stats import poisson
+import joblib
+import pandas as pd
+import os
 
-def advanced_predict_match(home_team_name, away_team_name, team_strengths):
-    if home_team_name not in team_strengths or away_team_name not in team_strengths:
-        return get_sample_prediction()
-    
-    home_attack, home_defense = team_strengths[home_team_name]
-    away_attack, away_defense = team_strengths[away_team_name]
-    
-    # Calculate expected goals
-    home_xG = (home_attack / away_defense) * 1.6
-    away_xG = (away_attack / home_defense) * 1.2
-    
-    # Poisson distribution calculations
-    max_goals = 6
-    home_probs = [poisson.pmf(i, home_xG) for i in range(max_goals)]
-    away_probs = [poisson.pmf(i, away_xG) for i in range(max_goals)]
-    
-    home_win, draw, away_win = 0, 0, 0
-    score_probs = {}
-    
-    for i in range(max_goals):
-        for j in range(max_goals):
-            p = home_probs[i] * away_probs[j]
-            if i > j:
-                home_win += p
-            elif i == j:
-                draw += p
-            else:
-                away_win += p
-            score_probs[f"{i}-{j}"] = p
-    
-    most_likely_score = max(score_probs, key=score_probs.get)
-    
-    # Calculate additional probabilities
-    btts_prob = 1 - (poisson.pmf(0, home_xG) * poisson.pmf(0, away_xG))
-    over_25_prob = 1 - sum([home_probs[i] * away_probs[j] for i in range(3) for j in range(3 - i)])
-    
-    return {
-        "home_win": round(home_win * 100, 1),
-        "draw": round(draw * 100, 1),
-        "away_win": round(away_win * 100, 1),
-        "most_likely_score": most_likely_score,
-        "home_xG": round(home_xG, 2),
-        "away_xG": round(away_xG, 2),
-        "btts_prob": round(btts_prob * 100, 1),
-        "over_25_prob": round(over_25_prob * 100, 1),
-        "confidence": "high"
-    }
+# Define the path to your trained model
+MODEL_PATH = os.path.join(os.path.dirname(__file__), 'models', 'xgb_model.pkl')
 
-def get_sample_prediction():
-    return {
-        "home_win": 48.7,
-        "draw": 27.3,
-        "away_win": 24.0,
-        "most_likely_score": "2-1",
-        "home_xG": 1.9,
-        "away_xG": 1.1,
-        "btts_prob": 65.2,
-        "over_25_prob": 61.8,
-        "confidence": "medium"
-    }
+class Predictor:
+    def __init__(self):
+        # Load the pre-trained model when this class is instantiated
+        try:
+            self.model = joblib.load(MODEL_PATH)
+        except FileNotFoundError:
+            print(f"Error: Model not found at {MODEL_PATH}. Please train the model first.")
+            self.model = None
 
-def predict_league_fixtures(fixtures, team_strengths):
-    predictions = []
-    
-    for fixture in fixtures:
-        home_team = fixture['teams']['home']['name']
-        away_team = fixture['teams']['away']['name']
+    def predict(self, features_df):
+        """Makes a prediction on a DataFrame of features."""
+        if self.model is None:
+            return "Model not loaded.", {}
+            
+        # Model predicts probabilities for each class [Draw, Home Win, Away Win]
+        probabilities = self.model.predict_proba(features_df)[0]
         
-        prediction = advanced_predict_match(home_team, away_team, team_strengths)
-        prediction['fixture'] = fixture
-        predictions.append(prediction)
-    
-    return predictions
+        # Get the class labels from the model
+        class_labels = self.model.classes_  # e.g., ['1', '2', 'X']
+
+        # Create a dictionary of outcomes and their probabilities
+        prediction_dict = dict(zip(class_labels, probabilities))
+        
+        # Get the most likely outcome
+        most_likely = max(prediction_dict, key=prediction_dict.get)
+        
+        return most_likely, prediction_dict
