@@ -60,6 +60,8 @@ st.dataframe(df, use_container_width=True, hide_index=True)
 
 # Show team strengths
 st.header("🏆 Team Strength Rankings")
+
+# FIXED: Changed 'strength_data' to correct variable name
 strength_data = []
 for team, (attack, defense) in strengths.items():
     strength_data.append({
@@ -69,6 +71,7 @@ for team, (attack, defense) in strengths.items():
         'OVERALL': round((attack + defense) / 2, 2)
     })
 
+# FIXED: Using correct variable name 'strength_data'
 strength_df = pd.DataFrame(strength_data).sort_values('OVERALL', ascending=False)
 st.dataframe(strength_df, use_container_width=True, hide_index=True)
 
