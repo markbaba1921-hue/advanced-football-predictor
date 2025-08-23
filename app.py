@@ -1,7 +1,7 @@
 # app.py
 import streamlit as st
 import pandas as pd
-import plotly.express as px
+from datetime import datetime
 from utils.api_client import get_league_id, get_fixtures, get_teams
 from utils.data_processor import calculate_team_strengths
 from utils.predictor import predict_league_fixtures
@@ -44,9 +44,12 @@ for pred in predictions:
     home = fixture['teams']['home']['name']
     away = fixture['teams']['away']['name']
     
+    # FIXED DATE FORMATTING - This is the corrected line
+    formatted_date = datetime.strptime(fixture['fixture']['date'][:10], '%Y-%m-%d').strftime('%d %b %Y')
+    
     prediction_data.append({
         'MATCH': f"{home} vs {away}",
-        'DATE': fixture['fixture']['date'][:10],
+        'DATE': formatted_date,  # Now using the properly formatted date
         'PREDICTED SCORE': pred['most_likely_score'],
         'HOME WIN': f"{pred['home_win']}%",
         'DRAW': f"{pred['draw']}%",
@@ -61,7 +64,6 @@ st.dataframe(df, use_container_width=True, hide_index=True)
 # Show team strengths
 st.header("🏆 Team Strength Rankings")
 
-# FIXED: Changed 'strength_data' to correct variable name
 strength_data = []
 for team, (attack, defense) in strengths.items():
     strength_data.append({
@@ -71,7 +73,6 @@ for team, (attack, defense) in strengths.items():
         'OVERALL': round((attack + defense) / 2, 2)
     })
 
-# FIXED: Using correct variable name 'strength_data'
 strength_df = pd.DataFrame(strength_data).sort_values('OVERALL', ascending=False)
 st.dataframe(strength_df, use_container_width=True, hide_index=True)
 
