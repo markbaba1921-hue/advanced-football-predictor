@@ -1,10 +1,7 @@
 # utils/api_client.py
-import requests
-from bs4 import BeautifulSoup
-import pandas as pd
 import streamlit as st
-from datetime import datetime
-import time
+from datetime import datetime, timedelta
+import random
 
 def get_league_id(country_name):
     league_ids = {
@@ -20,134 +17,61 @@ def get_season():
     return "2024-2025"
 
 def get_teams(league_id):
-    """Get teams from flashscore.com"""
-    teams = []
-    try:
-        url = f"https://www.flashscore.com/football/{league_id}/"
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        }
-        
-        response = requests.get(url, headers=headers)
-        soup = BeautifulSoup(response.content, 'html.parser')
-        
-        # Find team elements
-        team_elements = soup.find_all('span', class_='team-name')
-        for i, team in enumerate(team_elements[:20]):  # Get top 20 teams
-            teams.append({
-                'team': {
-                    'id': i + 1,
-                    'name': team.get_text().strip()
-                }
-            })
-            
-    except Exception as e:
-        st.warning(f"Web scraping teams: {e}")
-        # Fallback to sample data
-        teams = get_sample_teams(league_id)
-        
-    return teams
+    """Hardcoded teams for each league"""
+    teams_data = {
+        "premier-league": [
+            {'team': {'id': 1, 'name': 'Manchester City'}},
+            {'team': {'id': 2, 'name': 'Liverpool'}},
+            {'team': {'id': 3, 'name': 'Arsenal'}},
+            {'team': {'id': 4, 'name': 'Chelsea'}},
+            {'team': {'id': 5, 'name': 'Manchester United'}},
+            {'team': {'id': 6, 'name': 'Tottenham'}},
+            {'team': {'id': 7, 'name': 'Newcastle'}},
+            {'team': {'id': 8, 'name': 'Aston Villa'}}
+        ],
+        "la-liga": [
+            {'team': {'id': 9, 'name': 'Real Madrid'}},
+            {'team': {'id': 10, 'name': 'Barcelona'}},
+            {'team': {'id': 11, 'name': 'Atletico Madrid'}},
+            {'team': {'id': 12, 'name': 'Sevilla'}},
+            {'team': {'id': 13, 'name': 'Valencia'}}
+        ],
+        "bundesliga": [
+            {'team': {'id': 14, 'name': 'Bayern Munich'}},
+            {'team': {'id': 15, 'name': 'Dortmund'}},
+            {'team': {'id': 16, 'name': 'RB Leipzig'}},
+            {'team': {'id': 17, 'name': 'Leverkusen'}}
+        ],
+        "serie-a": [
+            {'team': {'id': 18, 'name': 'Inter Milan'}},
+            {'team': {'id': 19, 'name': 'AC Milan'}},
+            {'team': {'id': 20, 'name': 'Juventus'}},
+            {'team': {'id': 21, 'name': 'Napoli'}}
+        ],
+        "ligue-1": [
+            {'team': {'id': 22, 'name': 'PSG'}},
+            {'team': {'id': 23, 'name': 'Marseille'}},
+            {'team': {'id': 24, 'name': 'Lyon'}},
+            {'team': {'id': 25, 'name': 'Monaco'}}
+        ]
+    }
+    return teams_data.get(league_id, [])
 
 def get_fixtures(league_id, next_n=10):
-    """Get fixtures from flashscore.com"""
-    fixtures = []
-    try:
-        url = f"https://www.flashscore.com/football/{league_id}/fixtures/"
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        }
-        
-        response = requests.get(url, headers=headers)
-        soup = BeautifulSoup(response.content, 'html.parser')
-        
-        # Find fixture elements
-        match_elements = soup.find_all('div', class_='event__match')
-        
-        for match in match_elements[:next_n]:
-            try:
-                home_team = match.find('div', class_='event__participant--home').get_text().strip()
-                away_team = match.find('div', class_='event__participant--away').get_text().strip()
-                
-                # Get match time
-                time_element = match.find('div', class_='event__time')
-                match_time = time_element.get_text().strip() if time_element else "TBD"
-                
-                fixtures.append({
-                    'fixture': {
-                        'date': f"{datetime.now().date()} {match_time}",
-                        'timestamp': int(time.time())
-                    },
-                    'teams': {
-                        'home': {'name': home_team},
-                        'away': {'name': away_team}
-                    }
-                })
-            except:
-                continue
-                
-    except Exception as e:
-        st.warning(f"Web scraping fixtures: {e}")
-        fixtures = get_sample_fixtures(league_id)
-        
-    return fixtures
-
-def get_team_statistics(league_id, team_id):
-    """Advanced stats from fbref.com"""
-    try:
-        team_name = f"Team_{team_id}"
-        return {
-            'goals': {'for': {'total': {'total': 45}, 'expected': {'total': 42.5}}, 
-                     'against': {'total': {'total': 20}}},
-            'fixtures': {'played': {'total': 30}},
-            'shots': {'on': {'total': 150}}
-        }
-    except:
-        return None
-
-# Sample data fallbacks
-def get_sample_teams(league_id):
-    sample_teams = {
-        "premier-league": [{'team': {'id': 1, 'name': 'Manchester City'}}, 
-                          {'team': {'id': 2, 'name': 'Liverpool'}},
-                          {'team': {'id': 3, 'name': 'Arsenal'}},
-                          {'team': {'id': 4, 'name': 'Chelsea'}},
-                          {'team': {'id': 5, 'name': 'Manchester United'}}],
-        "la-liga": [{'team': {'id': 6, 'name': 'Real Madrid'}},
-                   {'team': {'id': 7, 'name': 'Barcelona'}},
-                   {'team': {'id': 8, 'name': 'Atletico Madrid'}}],
-        "bundesliga": [{'team': {'id': 9, 'name': 'Bayern Munich'}},
-                      {'team': {'id': 10, 'name': 'Dortmund'}}],
-        "serie-a": [{'team': {'id': 11, 'name': 'Inter Milan'}},
-                   {'team': {'id': 12, 'name': 'AC Milan'}}],
-        "ligue-1": [{'team': {'id': 13, 'name': 'PSG'}},
-                   {'team': {'id': 14, 'name': 'Marseille'}}]
-    }
-    return sample_teams.get(league_id, [])
-
-def get_sample_fixtures(league_id):
-    from datetime import datetime, timedelta
-    import random
-    
-    sample_teams = {
-        "premier-league": ['Manchester City', 'Liverpool', 'Arsenal', 'Chelsea', 'Man United'],
-        "la-liga": ['Real Madrid', 'Barcelona', 'Atletico Madrid', 'Sevilla'],
-        "bundesliga": ['Bayern Munich', 'Dortmund', 'RB Leipzig', 'Leverkusen'],
-        "serie-a": ['Inter Milan', 'AC Milan', 'Juventus', 'Napoli'],
-        "ligue-1": ['PSG', 'Marseille', 'Lyon', 'Monaco']
-    }
-    
-    teams = sample_teams.get(league_id, [])
+    """Generate realistic fixtures for the next 2 weeks"""
+    teams = [team['team']['name'] for team in get_teams(league_id)]
     fixtures = []
     
-    for i in range(10):
-        home_team = random.choice(teams)
-        away_team = random.choice([t for t in teams if t != home_team])
+    for i in range(next_n):
+        random.shuffle(teams)
+        home_team = teams[0]
+        away_team = teams[1]
         
-        fixture_date = (datetime.now() + timedelta(days=i)).strftime('%Y-%m-%dT%H:%M:%S+00:00')
+        match_date = (datetime.now() + timedelta(days=i)).strftime('%Y-%m-%dT%H:%M:%S+00:00')
         
         fixtures.append({
             'fixture': {
-                'date': fixture_date,
+                'date': match_date,
                 'timestamp': int((datetime.now() + timedelta(days=i)).timestamp())
             },
             'teams': {
@@ -157,3 +81,13 @@ def get_sample_fixtures(league_id):
         })
     
     return fixtures
+
+def get_team_statistics(league_id, team_id):
+    """Generate realistic stats for each team"""
+    return {
+        'goals': {'for': {'total': {'total': random.randint(30, 80)}, 
+                         'expected': {'total': random.uniform(35, 75)}}, 
+                 'against': {'total': {'total': random.randint(20, 50)}}},
+        'fixtures': {'played': {'total': 38}},
+        'shots': {'on': {'total': random.randint(100, 250)}}
+    }
