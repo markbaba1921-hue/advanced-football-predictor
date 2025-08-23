@@ -58,29 +58,55 @@ def get_teams(league_id):
     return teams_data.get(league_id, [])
 
 def get_fixtures(league_id, next_n=10):
-    """Generate realistic fixtures for the next 2 weeks"""
+    """Generate REALISTIC fixtures with proper scheduling"""
     teams = [team['team']['name'] for team in get_teams(league_id)]
     fixtures = []
     
-    for i in range(next_n):
-        random.shuffle(teams)
-        home_team = teams[0]
-        away_team = teams[1]
-        
-        match_date = (datetime.now() + timedelta(days=i)).strftime('%Y-%m-%dT%H:%M:%S+00:00')
-        
-        fixtures.append({
-            'fixture': {
-                'date': match_date,
-                'timestamp': int((datetime.now() + timedelta(days=i)).timestamp())
-            },
-            'teams': {
-                'home': {'name': home_team},
-                'away': {'name': away_team}
-            }
-        })
+    # Create realistic match pairs (each team plays once per round)
+    match_days = []
+    for i in range(0, len(teams) - 1, 2):
+        if i + 1 < len(teams):
+            match_days.append((teams[i], teams[i + 1]))
     
-    return fixtures
+    # Add remaining team if odd number
+    if len(teams) % 2 != 0:
+        match_days.append((teams[-1], "BYE"))
+    
+    # Generate fixtures for next 3 weeks (realistic football schedule)
+    for week in range(3):  # 3 weeks of fixtures
+        match_date = datetime.now() + timedelta(days=7 * week)
+        
+        for match in match_days:
+            if match[1] != "BYE":  # Skip BYE weeks
+                # Alternate home/away for realism
+                if week % 2 == 0:
+                    home_team, away_team = match[0], match[1]
+                else:
+                    home_team, away_team = match[1], match[0]
+                
+                # Set realistic match times (weekends + some weekdays)
+                if week == 0:
+                    match_time = match_date + timedelta(days=random.choice([5, 6]))  # Saturday/Sunday
+                else:
+                    match_time = match_date + timedelta(days=random.choice([0, 1, 4, 5, 6]))  # Mix of days
+                
+                # Add some time variation (12:00, 15:00, 17:30, 20:00)
+                hour = random.choice([12, 15, 17, 20])
+                minute = 0 if hour != 17 else 30
+                match_time = match_time.replace(hour=hour, minute=minute)
+                
+                fixtures.append({
+                    'fixture': {
+                        'date': match_time.strftime('%Y-%m-%dT%H:%M:%S+00:00'),
+                        'timestamp': int(match_time.timestamp())
+                    },
+                    'teams': {
+                        'home': {'name': home_team},
+                        'away': {'name': away_team}
+                    }
+                })
+    
+    return fixtures[:next_n]  # Return only requested number
 
 def get_team_statistics(league_id, team_id):
     """Generate realistic stats for each team"""
