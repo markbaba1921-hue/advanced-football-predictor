@@ -4,7 +4,8 @@ def get_teams(league_id):
     try:
         response = requests.get(url, headers=headers, params=querystring)
         data = response.json()
-        if data['results'] > 0:  # <--- This is the problematic line
+        # Check if the 'response' key exists and has data
+        if 'response' in data and data['response']:
             return data['response']
         else:
             return []
