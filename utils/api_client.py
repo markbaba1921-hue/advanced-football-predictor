@@ -23,7 +23,8 @@ def get_league_id(country_name):
     return league_ids.get(country_name)
 
 def get_season():
-    return 2023
+    """Use the 2025/2026 season"""
+    return 2025
 
 def get_teams(league_id):
     url = f"{BASE_URL}/teams"
