@@ -1,5 +1,10 @@
 import streamlit as st
 import pandas as pd
+import numpy as np  # Add this import if not already there
+from utils.predictor import Predictor
+from utils.data_processor import DataProcessor
+import streamlit as st
+import pandas as pd
 from utils.predictor import Predictor
 from utils.data_processor import DataProcessor
 
