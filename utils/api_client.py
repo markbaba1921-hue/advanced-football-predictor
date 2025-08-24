@@ -1,8 +1,14 @@
 # utils/api_client.py
 import requests
 import pandas as pd
-from config import API_KEY, API_HOST  # Store your key in a config.py file
-
+import streamlit as st
+try:
+    # Try to get the password from Streamlit's secure section
+    API_KEY = st.secrets["API_FOOTBALL"]["KEY"]
+    API_HOST = st.secrets["API_FOOTBALL"]["HOST"]
+except:
+    # If it's running on your computer, use the old file
+    from config import API_KEY, API_HOST
 class FootballDataClient:
     def __init__(self):
         self.base_url = "https://api-football-v1.p.rapidapi.com/v3"
