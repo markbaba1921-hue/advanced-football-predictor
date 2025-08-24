@@ -1,16 +1,14 @@
-# utils/data_processor.py
 import pandas as pd
+import numpy as np
 
 class DataProcessor:
     @staticmethod
     def create_features(fixtures_data):
         """
         Processes raw fixtures data into a DataFrame of features (X) and targets (y).
-        This is the most important step for accuracy.
         """
         data_list = []
         for fixture in fixtures_data:
-            # Extract basic info
             home_team = fixture['teams']['home']['name']
             away_team = fixture['teams']['away']['name']
             goals_home = fixture['goals']['home']
@@ -24,14 +22,11 @@ class DataProcessor:
             else:
                 result = 'X'
 
-            # --- FEATURE ENGINEERING ---
-            # This is a simplified example. A professional app would have 20+ features.
-            # You would need to calculate these based on the last N games for each team.
-            # Example placeholder features:
-            home_team_avg_goals = 1.6  # Should be calculated from past games
-            away_team_avg_goals = 1.2
-            home_team_form = 0.7        # e.g., % of points from last 5 games
-            away_team_form = 0.4
+            # Simplified features for demonstration
+            home_team_avg_goals = np.random.uniform(1.2, 2.1)
+            away_team_avg_goals = np.random.uniform(0.8, 1.9)
+            home_team_form = np.random.uniform(0.4, 0.9)
+            away_team_form = np.random.uniform(0.3, 0.8)
 
             data_list.append({
                 'home_team': home_team,
@@ -40,7 +35,7 @@ class DataProcessor:
                 'away_avg_goals': away_team_avg_goals,
                 'home_form': home_team_form,
                 'away_form': away_team_form,
-                'result': result  # This is our target (y)
+                'result': result
             })
 
         df = pd.DataFrame(data_list)
@@ -48,12 +43,13 @@ class DataProcessor:
 
     def prepare_prediction_data(self, home_team, away_team):
         """Prepares live data for a specific fixture to feed into the model."""
-        # You would use the API client here to get the latest stats for these two teams
-        # and calculate their current features (avg goals, form, etc.)
+        # For demonstration, we'll use random data
+        # In a real app, you would fetch actual team statistics here
+        
         prediction_data = {
-            'home_avg_goals': 1.8,  # Fetched live for the specific team
-            'away_avg_goals': 0.9,
-            'home_form': 0.8,
-            'away_form': 0.5,
+            'home_avg_goals': np.random.uniform(1.2, 2.1),
+            'away_avg_goals': np.random.uniform(0.8, 1.9),
+            'home_form': np.random.uniform(0.4, 0.9),
+            'away_form': np.random.uniform(0.3, 0.8),
         }
         return pd.DataFrame([prediction_data])
